@@ -2,19 +2,17 @@ import requests
 from bs4 import BeautifulSoup
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-import pandas as pd
 import random
 
 
 
 url = "https://codeforces.com/problemset"
 response = requests.get(url)
-
 soup = BeautifulSoup(response.text, 'html.parser')
 
 options = soup.find_all('option')
 
-
+#Problēmu tipu saglabāšana vārdnīcās (codeforces.com/problemset add tags)
 tag_names = {}
 success_rate = {}
 for option in options:
@@ -27,6 +25,7 @@ for option in options:
 url_beginning = "https://codeforces.com/profile/"
 username = input("Provide your codeforces USERNAME or FULL LINK: ")
 
+#profila pilnā linka iegūšana
 if url_beginning not in username:
     username = url_beginning + username
 
@@ -43,6 +42,7 @@ soup = BeautifulSoup(response.text, 'html.parser')
 div_container = soup.find(class_="info")
 li_elements = div_container.find_all('span', style = "font-weight:bold;")
 
+#reitinga meklēšana
 rating = 0
 if len(li_elements) > 0:
     rating = li_elements[0].text
@@ -61,6 +61,7 @@ total_difficulty = 0
 difficulty_count = 0
 successful_solves = 0
 
+#visu problēmu lapu izskatīšana
 while True:
 
     cur_url =  "https://codeforces.com/submissions/" + name + "/page/" + str(cur_page)
@@ -75,10 +76,13 @@ while True:
         items = row.find_all("td")
         if len(items) == 0:
             continue
+        
+        #problēmas rezultāta apskate
         accepted = False
         if items[5].find("span", class_="verdict-accepted"):
             accepted = True
-
+        
+        #katras problēmas tipa saskaitīšana, saglabāšana
         href = items[3].find("a").get("href")
         build_link = "https://codeforces.com" + href
         response = requests.get(build_link)
@@ -103,7 +107,7 @@ while True:
    
     if sub_count < 50:
         break
-
+    
     cur_page += 1
 
 
@@ -111,6 +115,9 @@ while True:
 avg_rate = 0
 rate_count = 0
 avg_tag_frequency = 0
+
+#katras problēmas tipa, kopējo risinājumu vidējo vērtību aprēķināšana
+#piemēram - kopēji apskatītas 10 matemātikas problēmas, taču pareizi atrisinātas tikai 6 --> 60% precizitāte problēmu tipam - matemātika.
 
 for key in tag_names:
     avg_tag_frequency += tag_names[key]
@@ -128,11 +135,10 @@ if len(encountered_problems) != 0:
     success_perc = round(len(all_problems)/len(encountered_problems)*100)
 
 
+#reitinga diapazaonas problēmu meklēšana
 problem_url = "https://codeforces.com/problemset/?tags={}-{}".format(rating_lowerbound, rating_upperbound)
 response = requests.get(problem_url)
 soup = BeautifulSoup(response.text, 'html.parser')
-
-
 
 last_page = int(soup.find_all("span", class_="page-index")[-1].text)
 recommended_problems = []
@@ -144,6 +150,7 @@ visited_pages = set()
 while valid_length:
     page = random.randint(1, last_page)
 
+    #lai nemeklētu bezgalīgi, ja gadījumā dotajā diapazonā nav ko atrisināt
     if page in visited_pages:
         if len(visited_pages) == last_page:
             break
@@ -160,35 +167,42 @@ while valid_length:
             for li in elements.find_all("a"):
                 if li.text == "*special problem":
                     continue
-            
-                if len(recommended_problems) < 10:
-                    problem_id = div.find("div", style="float: left;").find("a").get("href")
-                    build_link = "https://codeforces.com" + problem_id
-                    if build_link not in all_problems and build_link not in recommended_problems and len(recommended_problems) < 10:
-                        recommended_problems.append(build_link)
-                    if len(recommended_problems) == 10:
-                        valid_length = False
-                        break
+                
+                #pievienos problēmu tikai, ja tās tipa precizitāte ir zem vidējā, vai ja konkrētais algoritms netiek bieži apskatīts
+                #piemēram - vidēja kopējā veiksmīgu iesniegumu precizitāte: 56%, 'data structures' algoritmu precizitāte: 40% --> 'data structure' uzdevums tiks pievienots.
+                #piemēram - vidēji no katra tipa atrisinātas 10 problēmas, bet no 'shortest paths' tikai 7 problēmas --> 'shortest paths' uzdevums tiks pievienots.
+                
+                if success_rate[li.text] <= avg_rate or tag_names[li.text] <= avg_tag_frequency:
+                    if len(recommended_problems) < 15:
+                        problem_id = div.find("div", style="float: left;").find("a").get("href")
+                        build_link = "https://codeforces.com" + problem_id
+                        if build_link not in all_problems and build_link not in recommended_problems and len(recommended_problems) < 15:
+                            recommended_problems.append(build_link)
+                        if len(recommended_problems) == 15:
+                            valid_length = False
+                            break
 
                 if not valid_length:
                     break
 
         if not valid_length:
             break
-   
+
+# Datu sakārtošana priekš attēlošanas excelii (visvairāk/vismazāk apskatītie problēmu tipi)
         
 sorted_tags = dict(sorted(tag_names.items(), key=lambda item: item[1], reverse=True))
 sorted_tags2 = dict(sorted(tag_names.items(), key=lambda item: item[1], reverse=False))
-first_5_tags = [key for key in list(sorted_tags.keys())[:5]]
-first_5_values = [sorted_tags[key] for key in list(sorted_tags.keys())[:5]]
+first_10_tags = [key for key in list(sorted_tags.keys())[:10]]
+first_10_values = [sorted_tags[key] for key in list(sorted_tags.keys())[:10]]
 last_5_tags = [key for key in list(sorted_tags2.keys())[:5]]
 last_5_values = [sorted_tags2[key] for key in list(sorted_tags2.keys())[:5]]
 
 
+#datu apstrāde, ierakstīšana excel failā
 wb = Workbook()
 ws = wb.active
 
-problemdata = [first_5_tags, first_5_values, [success_rate[x] for x in first_5_tags]]
+problemdata = [first_10_tags, first_10_values, [success_rate[x] for x in first_10_tags]]
 problemdata2 = [last_5_tags, last_5_values, [success_rate[x] for x in last_5_tags]]
 profiledata = [['USERNAME', username], ['RATING', rating], ['SOLVED PROBLEMS', len(all_problems)], ['SUBMISSION SUCCESS RATE', success_perc]]
 
@@ -232,7 +246,7 @@ ws.cell(row=4, column=1, value = "Recommended Problems")
 ws.cell(row=4, column=1).font = Font(bold=True)
 ws.cell(row=4, column=1).border = orange_border
 
-for i in range(5, 15):
+for i in range(5, min(20, 5+len(recommended_problems))):
     cell = ws.cell(row=i,column=1)
     cell.value = recommended_problems[i-5].replace('https://codeforces.com/problemset/', '')
     cell.hyperlink = recommended_problems[i-5]
@@ -243,37 +257,37 @@ for i in range(5, 15):
 titles = ['Frequently Solved Problems', 'Problem Count', 'Success Rate']
 titles2 = ['Least Encountered Problems', 'Problem Count', 'Success Rate']
 
-for i in range(16, 22):
+for i in range(21, 32):
     for j in range(1, 4):
         cell = ws.cell(row=i,column=j)
 
-        if i == 16:
+        if i == 21:
             cell.value = titles[j-1]
             cell.font = Font(bold=True)
         elif j==3:
-            cell.value = str(problemdata[j-1][i-17]) + " %"
+            cell.value = str(problemdata[j-1][i-22]) + " %"
         else:
-            cell.value = problemdata[j-1][i-17]
+            cell.value = problemdata[j-1][i-22]
 
-        if i != 16:
+        if i != 21:
             cell.fill = orange_fill
 
         cell.alignment = Alignment(horizontal='left')
         cell.border = orange_border
 
-for i in range(23, 29):
+for i in range(33, 38):
     for j in range(1, 4):
         cell = ws.cell(row=i,column=j)
 
-        if i == 23:
+        if i == 33:
             cell.value = titles2[j-1]
             cell.font = Font(bold=True)
         elif j==3:
-            cell.value = str(problemdata2[j-1][i-24]) + " %"
+            cell.value = str(problemdata2[j-1][i-34]) + " %"
         else:
-            cell.value = problemdata2[j-1][i-24]
+            cell.value = problemdata2[j-1][i-34]
 
-        if i != 23:
+        if i != 33:
             cell.fill = orange_fill
 
         cell.alignment = Alignment(horizontal='left')
