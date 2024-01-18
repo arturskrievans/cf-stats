@@ -42,7 +42,7 @@ atrašanu, kā arī pāatrināja pašu programmu.
 Navigācija starp saita lapām tika paveikta nolasot 'href' vērtību un ar 'requests', 'bs4' bibliotēku palīdzību ielādējot nākamās lapas html.
 Konkrētu elementu atrašana tika paveikta ar 'bs4' bibliotēkas funkcionalitāti 'soup.find(element)'.
 
-5. punkta izpildei tika izmantota openpyxl bibliotēka.
+Piektā punkta izpildei tika izmantota openpyxl bibliotēka.
 Bibliotēka tika izvēlēta, jo tā ļauj vienkārši lasīt, rakstīt, modificēt excel vērtības, kā arī tā tika daudz apskatīta kursa laikā.
 Atkarībā no datu masīvu lieluma, konkrētās excel šūnās tabulu veidā tika ierakstīti visi web scraping ceļā iegūtie dati.
 
