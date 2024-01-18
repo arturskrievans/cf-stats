@@ -31,6 +31,8 @@ Programmai, kas sasniedz visu iepriekš aprakstīto ir sekojoša funkcionalitāt
 Bilde ar excel formātu:
 ![user_data](https://github.com/arturskrievans/cf-stats/assets/96594474/5495aec8-1981-4f46-8541-1403544561a9)
 
+Mainot dažus programmas parametrus var arī iegūt plašāku informāciju par konkrēta lietotāja datiem:
+![user_data2](https://github.com/arturskrievans/cf-stats/assets/96594474/366b2d74-d4ea-4e0b-9f90-b8590c0df031)
 
 Bibliotēku izvēle.
 
