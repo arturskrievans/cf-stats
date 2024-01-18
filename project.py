@@ -1,6 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+import pandas as pd
 import random
+
+
 
 url = "https://codeforces.com/problemset"
 response = requests.get(url)
@@ -48,10 +53,13 @@ rating_upperbound = min(3500, max(1200, rating + 400 - rating%100))
 
 
 all_problems = set()
+encountered_problems = []
+full_tag_count = tag_names.copy()
 cur_page = 1
 
 total_difficulty = 0
 difficulty_count = 0
+successful_solves = 0
 
 while True:
 
@@ -61,48 +69,37 @@ while True:
 
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    successful_submission = False
-
-    submission_data = soup.find_all("td")
-    for cell in submission_data:
-        parsed = cell.text.replace("  ", "").replace("\n", "")
-        if "Accepted" in parsed:
-            successful_submission = True
- 
-    
-  
+    submission_data = soup.find_all("tr")
     sub_count = 0
-    all_links = soup.find(class_="datatable").find_all("a")
-    for link in all_links:
-        href_value = link.get('href')
-        if "contest" and "problem" in href_value:
-            build_link = "https://codeforces.com" + href_value
-            if build_link not in all_problems:
+    for row in submission_data:
+        items = row.find_all("td")
+        if len(items) == 0:
+            continue
+        accepted = False
+        if items[5].find("span", class_="verdict-accepted"):
+            accepted = True
 
-                response = requests.get(build_link)
-                soup = BeautifulSoup(response.text, 'html.parser')
+        href = items[3].find("a").get("href")
+        build_link = "https://codeforces.com" + href
+        response = requests.get(build_link)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        tags = soup.find_all("span", class_="tag-box")
+        for tag in tags:
+            parsed = tag.text.replace("\n", "").replace("  ", "")
+            filtered = [x for x in tag_names.keys() if x in parsed]
+            for x in filtered:
+                full_tag_count[x] += 1
+                if build_link not in encountered_problems:
+                    tag_names[x] += 1
+                if accepted:
+                    success_rate[x] += 1
 
-                tags = soup.find_all("span", class_="tag-box")
-                for tag in tags:
+      
+        if accepted:
+            all_problems.add(build_link)
 
-                    parsed = tag.text.replace("\n", "").replace("  ", "")
-                    filtered = [x for x in tag_names.keys() if x in parsed]
-
-                    for x in filtered:
-                        tag_names[x] += 1
-                        if successful_submission:
-                            success_rate[x] += 1
-                        
-                    digits = [x for x in parsed if x >= "0" and x <= "9"]
-                    if len(digits) > 0:
-                        total_difficulty += int("".join(digits))
-                        difficulty_count  += 1
-    
-                   
-
-                all_problems.add(build_link)
-            sub_count += 1
-        
+        encountered_problems.append(build_link)
+        sub_count += 1
    
     if sub_count < 50:
         break
@@ -117,29 +114,42 @@ avg_tag_frequency = 0
 
 for key in tag_names:
     avg_tag_frequency += tag_names[key]
-    if tag_names[key] == 0:
+    if full_tag_count[key] == 0:
         continue
-    success_rate[key] = success_rate[key]/tag_names[key]*100
+    success_rate[key] = round(success_rate[key]/full_tag_count[key]*100)
     avg_rate += success_rate[key]
     rate_count += 1
 
 avg_rate /= rate_count
-avg_tag_frequency /= len(tag_names)
+avg_tag_frequency /= len(encountered_problems)
+
+success_perc = 0
+if len(encountered_problems) != 0:
+    success_perc = round(len(all_problems)/len(encountered_problems)*100)
 
 
 problem_url = "https://codeforces.com/problemset/?tags={}-{}".format(rating_lowerbound, rating_upperbound)
 response = requests.get(problem_url)
 soup = BeautifulSoup(response.text, 'html.parser')
 
-print(rating_lowerbound, rating_upperbound)
+
 
 last_page = int(soup.find_all("span", class_="page-index")[-1].text)
 recommended_problems = []
 
 
 valid_length = True
+visited_pages = set()
+
 while valid_length:
     page = random.randint(1, last_page)
+
+    if page in visited_pages:
+        if len(visited_pages) == last_page:
+            break
+        continue
+
+    visited_pages.add(page)
     problem_url = "https://codeforces.com/problemset/page/{}?tags={}-{}".format(page, rating_lowerbound, rating_upperbound)
     response = requests.get(problem_url)
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -151,27 +161,123 @@ while valid_length:
                 if li.text == "*special problem":
                     continue
             
-                if success_rate[li.text] <= avg_rate or tag_names[li.text] <= avg_tag_frequency:
-                    if len(recommended_problems) < 5:
-                        problem_id = div.find("div", style="float: left;").find("a").get("href")
-                        build_link = "https://codeforces.com" + problem_id
-                        if build_link not in all_problems and build_link not in recommended_problems and len(recommended_problems) < 5:
-                            recommended_problems.append(build_link)
-
-
-                        if len(recommended_problems) == 5:
-                            valid_length = False
-                            break
+                if len(recommended_problems) < 10:
+                    problem_id = div.find("div", style="float: left;").find("a").get("href")
+                    build_link = "https://codeforces.com" + problem_id
+                    if build_link not in all_problems and build_link not in recommended_problems and len(recommended_problems) < 10:
+                        recommended_problems.append(build_link)
+                    if len(recommended_problems) == 10:
+                        valid_length = False
+                        break
 
                 if not valid_length:
                     break
 
         if not valid_length:
             break
-    
+   
         
-for problem in recommended_problems:
-    print(problem)
+sorted_tags = dict(sorted(tag_names.items(), key=lambda item: item[1], reverse=True))
+sorted_tags2 = dict(sorted(tag_names.items(), key=lambda item: item[1], reverse=False))
+first_5_tags = [key for key in list(sorted_tags.keys())[:5]]
+first_5_values = [sorted_tags[key] for key in list(sorted_tags.keys())[:5]]
+last_5_tags = [key for key in list(sorted_tags2.keys())[:5]]
+last_5_values = [sorted_tags2[key] for key in list(sorted_tags2.keys())[:5]]
 
 
+wb = Workbook()
+ws = wb.active
 
+problemdata = [first_5_tags, first_5_values, [success_rate[x] for x in first_5_tags]]
+problemdata2 = [last_5_tags, last_5_values, [success_rate[x] for x in last_5_tags]]
+profiledata = [['USERNAME', username], ['RATING', rating], ['SOLVED PROBLEMS', len(all_problems)], ['SUBMISSION SUCCESS RATE', success_perc]]
+
+for col_letter in ['A', 'B', 'C', 'D']:
+    col_index = ord(col_letter) - ord('A') + 1
+    ws.column_dimensions[col_letter].width = 40
+
+ws.row_dimensions[1].height = 30
+ws.row_dimensions[4].height = 20
+ws.row_dimensions[11].height = 20 
+
+orange_border = Border(
+    left=Side(style='thin', color='FFA500'),
+    right=Side(style='thin', color='FFA500'),
+    top=Side(style='thin', color='FFA500'),
+    bottom=Side(style='thin', color='FFA500')
+)
+orange_fill = PatternFill(start_color="FFD7B5", end_color="FFD7B5", fill_type="solid")
+
+for i in range(1, 3):
+    for j in range(1, 5):
+        cell = ws.cell(row=i, column=j, value = profiledata[j-1][i-1])
+        if i == 1:
+            cell.font = Font(bold=True)
+        elif j==1:
+            cell.value = name
+            cell.hyperlink = profiledata[j-1][i-1]
+            cell.style = 'Hyperlink' 
+            cell.font = Font(color="964B00", bold=True)
+        elif j==4:
+            cell.value = str(profiledata[j-1][i-1]) + " %"
+
+        if i != 1:
+            cell.fill = orange_fill
+    
+        cell.alignment = Alignment(horizontal='left')
+        cell.border = orange_border
+
+
+ws.cell(row=4, column=1, value = "Recommended Problems")
+ws.cell(row=4, column=1).font = Font(bold=True)
+ws.cell(row=4, column=1).border = orange_border
+
+for i in range(5, 15):
+    cell = ws.cell(row=i,column=1)
+    cell.value = recommended_problems[i-5].replace('https://codeforces.com/problemset/', '')
+    cell.hyperlink = recommended_problems[i-5]
+    cell.style = 'Hyperlink'
+    cell.border = orange_border
+    cell.fill = orange_fill
+
+titles = ['Frequently Solved Problems', 'Problem Count', 'Success Rate']
+titles2 = ['Least Encountered Problems', 'Problem Count', 'Success Rate']
+
+for i in range(16, 22):
+    for j in range(1, 4):
+        cell = ws.cell(row=i,column=j)
+
+        if i == 16:
+            cell.value = titles[j-1]
+            cell.font = Font(bold=True)
+        elif j==3:
+            cell.value = str(problemdata[j-1][i-17]) + " %"
+        else:
+            cell.value = problemdata[j-1][i-17]
+
+        if i != 16:
+            cell.fill = orange_fill
+
+        cell.alignment = Alignment(horizontal='left')
+        cell.border = orange_border
+
+for i in range(23, 29):
+    for j in range(1, 4):
+        cell = ws.cell(row=i,column=j)
+
+        if i == 23:
+            cell.value = titles2[j-1]
+            cell.font = Font(bold=True)
+        elif j==3:
+            cell.value = str(problemdata2[j-1][i-24]) + " %"
+        else:
+            cell.value = problemdata2[j-1][i-24]
+
+        if i != 23:
+            cell.fill = orange_fill
+
+        cell.alignment = Alignment(horizontal='left')
+        cell.border = orange_border
+
+
+wb.save('user_statistics.xlsx')
