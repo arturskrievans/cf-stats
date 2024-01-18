@@ -42,6 +42,9 @@ atrašanu, kā arī pāatrināja pašu programmu.
 Navigācija starp saita lapām tika paveikta nolasot 'href' vērtību un ar 'requests', 'bs4' bibliotēku palīdzību ielādējot nākamās lapas html.
 Konkrētu elementu atrašana tika paveikta ar 'bs4' bibliotēkas funkcionalitāti 'soup.find(element)'.
 
+!! Tā kā pats codeforces saits mēdz būt diezgan lēns - slow load and response time (it īpašī online olimpiāžu laikā ), pat izmantojot bs4 var aizņemt kādu laiku. It īpaši, ja kāds
+profils ir ļoti aktīvs ar vairākiem desmitiem lapu (katra lapa satur 50 linkus ar problēmām, kuras jāapskata) , programmas izpilde vai aizņemt pat dažas min.  !!
+
 Piektā punkta izpildei tika izmantota openpyxl bibliotēka.
 Bibliotēka tika izvēlēta, jo tā ļauj vienkārši lasīt, rakstīt, modificēt excel vērtības, kā arī tā tika daudz apskatīta kursa laikā.
 Atkarībā no datu masīvu lieluma, konkrētās excel šūnās tabulu veidā tika ierakstīti visi web scraping ceļā iegūtie dati.
