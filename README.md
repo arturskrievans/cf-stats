@@ -43,7 +43,13 @@ Navigācija starp saita lapām tika paveikta nolasot 'href' vērtību un ar 'req
 Konkrētu elementu atrašana tika paveikta ar 'bs4' bibliotēkas funkcionalitāti 'soup.find(element)'.
 
 !! Tā kā pats codeforces saits mēdz būt diezgan lēns - slow load and response time (it īpašī online olimpiāžu laikā ), pat bs4 izmantošana var aizņemt kādu laiku. It īpaši, ja kāds
-profils ir ļoti aktīvs ar vairākiem desmitiem lapu (katra lapa satur 50 linkus ar problēmām, kuras jāapskata) , programmas izpilde vai aizņemt pat dažas min.  !!
+profils ir ļoti aktīvs ar vairākiem desmitiem lapu (katra lapa satur 50 linkus ar problēmām, kuras jāapskata) , programmas izpilde vai aizņemt pat dažas min.  
+Ja gadījumā izmantosiet kodu ātrai pārbaudei, ieteicams izmantot kādu profilu ar mazāk atrisinājumu lapām.
+Piemēri ar linkiem, kurus var izmantot ātrai apskatei:
+https://codeforces.com/profile/AM247
+https://codeforces.com/profile/Sachin04032003
+https://codeforces.com/submissions/BIT_00 !!
+
 
 Piektā punkta izpildei tika izmantota openpyxl bibliotēka.
 Bibliotēka tika izvēlēta, jo tā ļauj vienkārši lasīt, rakstīt, modificēt excel vērtības, kā arī tā tika daudz apskatīta kursa laikā.
