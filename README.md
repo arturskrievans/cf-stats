@@ -46,9 +46,9 @@ Konkrētu elementu atrašana tika paveikta ar 'bs4' bibliotēkas funkcionalitāt
 profils ir ļoti aktīvs ar vairākiem desmitiem lapu (katra lapa satur 50 linkus ar problēmām, kuras jāapskata) , programmas izpilde vai aizņemt pat dažas min.  
 Ja gadījumā izmantosiet kodu ātrai pārbaudei, ieteicams izmantot kādu profilu ar mazāk atrisinājumu lapām.
 Piemēri ar linkiem, kurus var izmantot ātrai apskatei:
-https://codeforces.com/profile/AM247
 https://codeforces.com/profile/Sachin04032003
-https://codeforces.com/submissions/BIT_00 !!
+https://codeforces.com/submissions/BIT_00 
+https://codeforces.com/profile/AM247 !!
 
 
 Piektā punkta izpildei tika izmantota openpyxl bibliotēka.
