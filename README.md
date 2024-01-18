@@ -38,11 +38,11 @@ Bibliotēku izvēle.
 
 Lai izpildītu 1.-4. web scraping punktus tika izvēlēta bs4 bibliotēka kopā ar 'requests' bibliotēku.
 Selenium vietā tika izvēlēts bs4, jo visi vajadzīgie dati netiek ielādēti dinamiskā veidā - viss projektam vajadzīgais bija pieejams html kodā. Tas vienkāršoja elementu 
-atrašanu, kā arī pāatrināja pašu programmu.
+atrašanu, kā arī paātrināja pašu programmu.
 Navigācija starp saita lapām tika paveikta nolasot 'href' vērtību un ar 'requests', 'bs4' bibliotēku palīdzību ielādējot nākamās lapas html.
 Konkrētu elementu atrašana tika paveikta ar 'bs4' bibliotēkas funkcionalitāti 'soup.find(element)'.
 
-!! Tā kā pats codeforces saits mēdz būt diezgan lēns - slow load and response time (it īpašī online olimpiāžu laikā ), pat izmantojot bs4 var aizņemt kādu laiku. It īpaši, ja kāds
+!! Tā kā pats codeforces saits mēdz būt diezgan lēns - slow load and response time (it īpašī online olimpiāžu laikā ), pat bs4 izmantošana var aizņemt kādu laiku. It īpaši, ja kāds
 profils ir ļoti aktīvs ar vairākiem desmitiem lapu (katra lapa satur 50 linkus ar problēmām, kuras jāapskata) , programmas izpilde vai aizņemt pat dažas min.  !!
 
 Piektā punkta izpildei tika izmantota openpyxl bibliotēka.
